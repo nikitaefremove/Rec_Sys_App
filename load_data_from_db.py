@@ -14,6 +14,6 @@ def batch_load_sql(query: str) -> pd.DataFrame:
     return pd.concat(chunks, ignore_index=True)
 
 def load_features() -> pd.DataFrame:
-    query = 'SELECT * FROM nikita_efremov_feature'
+    query = 'SELECT * FROM nikita_efremov_features_2'
     return batch_load_sql(query)
 
