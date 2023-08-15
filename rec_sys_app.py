@@ -56,8 +56,5 @@ def load_features() -> pd.DataFrame:
 
 ### Endpoint
 @app.get("/post/recommendations/", response_model=List[PostGet])
-def recommended_posts(
-        id: int,
-        time: datetime,
-        limit: int = 10) -> List[PostGet]:
-    pass
+def recommended_posts(id: int, time: datetime, limit: int = 10) -> List[PostGet]:
+
