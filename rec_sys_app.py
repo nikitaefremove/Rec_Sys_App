@@ -49,12 +49,21 @@ def batch_load_sql(query: str) -> pd.DataFrame:
     return pd.concat(chunks, ignore_index=True)
 
 
-def load_features() -> pd.DataFrame:
-    query = 'SELECT * FROM nikita_efremov_feature'
+def load_features(user_id) -> pd.DataFrame:
+    query = f'SELECT * FROM nikita_efremov_feature WHERE user_id = {user_id}'
     return batch_load_sql(query)
 
 
 ### Endpoint
 @app.get("/post/recommendations/", response_model=List[PostGet])
 def recommended_posts(id: int, time: datetime, limit: int = 10) -> List[PostGet]:
+    ### this endpoint has to return top 5 post_id, text
+    pass
 
+df = load_features()
+
+model = load_models()
+
+pred = model.predict_proba(df)
+
+print(pred)
