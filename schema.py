@@ -13,7 +13,7 @@ class UserGet(BaseModel):
     os : str
     source : str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PostGet(BaseModel):
@@ -21,7 +21,7 @@ class PostGet(BaseModel):
     text : str
     topic : str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class FeedGet(BaseModel):
@@ -32,4 +32,4 @@ class FeedGet(BaseModel):
     user: UserGet
     post: PostGet
     class Config:
-        orm_mode = True
+        from_attributes = True

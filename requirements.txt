@@ -13,4 +13,4 @@ loguru==0.6.0
 implicit==0.7.0
 lightfm==1.17
 datetime==5.2
-nltk==3.8.1
+nltk==3.8.1 
