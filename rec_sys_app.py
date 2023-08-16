@@ -108,7 +108,7 @@ def get_post_id(id: int, db: Session = Depends(get_db)) -> PostGet:
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/{id}", response_model=List[PostGet])
 def recommended_posts(id: int, db: Session = Depends(get_db)) -> List[PostGet]:
-    # Используем глобальные df1 и df2
+    # Use glo
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
     # Запрос в базу данных для получения деталей по этим ID
