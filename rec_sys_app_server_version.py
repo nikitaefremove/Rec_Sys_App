@@ -9,7 +9,7 @@ from pydantic import BaseModel
 
 
 class PostGet(BaseModel):
-    id: int
+    post_id: int
     text: str
     topic: str
 
@@ -127,11 +127,11 @@ def get_post_id(id: int) -> PostGet:
         raise HTTPException(404, "ID not found")
 
     post_dict = post_record.iloc[0].to_dict()
+    print(post_dict)  # Add this print statement
     return post_dict
 
 
 ### Get 5 recommendation of post to user
-@app.get("/post/recommendations/{id}", response_model=List[PostGet])
 @app.get("/post/recommendations/{id}", response_model=List[PostGet])
 def recommended_posts(id: int, time: datetime, limit: int=5) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
