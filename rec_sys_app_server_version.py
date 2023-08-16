@@ -31,7 +31,7 @@ def get_model_path(path: str) -> str:
 
 def load_models():
     model_path = get_model_path("/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/REC_SYS/catboost_model")
-    model = CatBoostClassifier().load_model('catboost_model', format='cbm')
+    model = CatBoostClassifier().load_model(model_path, format='cbm')
     return model
 
 
@@ -133,7 +133,7 @@ def get_post_id(id: int) -> PostGet:
 
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/{id}", response_model=List[PostGet])
-def recommended_posts(id: int, time: datetime, limit: int=5) -> List[PostGet]:
+def recommended_posts(id: int, time: datetime=now, limit: int=5) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
     valid_post_ids = post_texts_df['post_id'].unique().tolist()
