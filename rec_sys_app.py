@@ -38,7 +38,10 @@ def load_models():
     model = CatBoostClassifier().load_model('catboost_model', format='cbm')
     return model
 
+
 model = load_models()
+
+
 ### Load features from database
 
 def batch_load_sql(query: str) -> pd.DataFrame:
@@ -60,7 +63,10 @@ def load_features() -> pd.DataFrame:
     query2 = 'SELECT * FROM nikita_efremov_post_features_df'
     return batch_load_sql(query1), batch_load_sql(query2)
 
+
 df1, df2 = load_features()
+
+
 ### Function for prediction
 
 def prediction_top_5_posts(user_features_df, post_features_df, user_id, model):
@@ -96,6 +102,16 @@ def prediction_top_5_posts(user_features_df, post_features_df, user_id, model):
 
 ### Endpoints
 
+### Get information about user
+
+@app.get("/user/{id}", response_model=UserGet)
+def get_user_id(id: int, db: Session = Depends(get_db)) -> UserGet:
+    query_user_id = db.query(User).filter(User.id == id).one_or_none()
+    if not query_user_id:
+        raise HTTPException(404, "ID not found")
+    return query_user_id
+
+
 ### Get information about post by post_id
 @app.get("/post/{id}", response_model=PostGet)
 def get_post_id(id: int, db: Session = Depends(get_db)) -> PostGet:
@@ -119,5 +135,3 @@ def recommended_posts(id: int, db: Session = Depends(get_db)) -> List[PostGet]:
         raise HTTPException(404, "Some recommended posts not found")
 
     return posts
-
-
