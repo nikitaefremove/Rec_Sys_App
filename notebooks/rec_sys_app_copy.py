@@ -1,30 +1,26 @@
 from typing import List
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 import pandas as pd
 from sqlalchemy import create_engine
 import os
 from catboost import CatBoostClassifier
 from datetime import datetime
-from sqlalchemy.orm import Session
-from sqlalchemy.sql import desc
-from sqlalchemy.sql.functions import count
-from database import SessionLocal
-from schema import UserGet, PostGet, FeedGet
-from table_user import User
-from table_post import Post
-from table_feed import Feed
+from pydantic import BaseModel
+
+
+class PostGet(BaseModel):
+    id: int
+    text: str
+    topic: str
+
+    class Config:
+        from_attributes = True
+
 
 app = FastAPI()
 
 
-### Connection function
-def get_db():
-    with SessionLocal() as db:
-        return db
-
-
-
-### Load catboost_model
+# Load catboost_model
 def get_model_path(path: str) -> str:
     if os.environ.get("IS_LMS") == "1":  # Checking localhost or LMS service
         MODEL_PATH = '/workdir/user_input/model'
@@ -58,13 +54,32 @@ def batch_load_sql(query: str) -> pd.DataFrame:
     return pd.concat(chunks, ignore_index=True)
 
 
-def load_features() -> pd.DataFrame:
+def load_features():
     query1 = 'SELECT * FROM nikita_efremov_user_features_df'
     query2 = 'SELECT * FROM nikita_efremov_post_features_df'
     return batch_load_sql(query1), batch_load_sql(query2)
 
 
 df1, df2 = load_features()
+
+
+### Load post_text_df dataframe
+
+def load_post_text_df() -> pd.DataFrame:
+    query = 'SELECT * FROM public.post_text_df'
+    return batch_load_sql(query)
+
+
+def load_post_texts(post_ids: List[int]) -> List[dict]:
+    global post_texts_df
+    if post_texts_df is None:
+        raise ValueError("First call load_post_texts_df().")
+
+    records_df = post_texts_df[post_texts_df['post_id'].isin(post_ids)]
+    return records_df.to_dict("records")
+
+
+post_texts_df = load_post_text_df()
 
 
 ### Function for prediction
@@ -102,36 +117,32 @@ def prediction_top_5_posts(user_features_df, post_features_df, user_id, model):
 
 ### Endpoints
 
-### Get information about user
-
-@app.get("/user/{id}", response_model=UserGet)
-def get_user_id(id: int, db: Session = Depends(get_db)) -> UserGet:
-    query_user_id = db.query(User).filter(User.id == id).one_or_none()
-    if not query_user_id:
-        raise HTTPException(404, "ID not found")
-    return query_user_id
-
 
 ### Get information about post by post_id
 @app.get("/post/{id}", response_model=PostGet)
-def get_post_id(id: int, db: Session = Depends(get_db)) -> PostGet:
-    query_post_id = db.query(Post).filter(Post.id == id).one_or_none()
-    if not query_post_id:
+def get_post_id(id: int) -> PostGet:
+    post_record = post_texts_df[post_texts_df['post_id'] == id]
+
+    if post_record.empty:
         raise HTTPException(404, "ID not found")
-    return query_post_id
+
+    post_dict = post_record.iloc[0].to_dict()
+    return post_dict
 
 
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/{id}", response_model=List[PostGet])
-def recommended_posts(id: int, db: Session = Depends(get_db)) -> List[PostGet]:
-    # Use global variables of df1, df2, model
+@app.get("/post/recommendations/{id}", response_model=List[PostGet])
+def recommended_posts(id: int, time: datetime, limit: int=5) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
-    # Query to database for get top 5 posts
-    posts = db.query(Post).filter(Post.id.in_(top_5_posts_ids)).all()
+    valid_post_ids = post_texts_df['post_id'].unique().tolist()
+    top_5_posts_ids = [post_id for post_id in top_5_posts_ids if post_id in valid_post_ids]
 
-    # Create exception
+    # Filter top 5 posts from post_texts_df DataFrame
+    posts = post_texts_df[post_texts_df['post_id'].isin(top_5_posts_ids)]
+
     if len(posts) != 5:
         raise HTTPException(404, "Some recommended posts not found")
 
-    return posts
+    return posts.to_dict('records')
