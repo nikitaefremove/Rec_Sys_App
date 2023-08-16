@@ -106,13 +106,16 @@ def get_post_id(id: int, db: Session = Depends(get_db)) -> PostGet:
 
 
 ### Get 5 recommendation of post to user
-@app.get("/post/recommendations/", response_model=List[PostGet])
-def recommended_posts(id: int, time: datetime, limit: int = 10) -> List[PostGet]:
-    ### this endpoint has to return top 5 post_id, text
-    pass
+@app.get("/post/recommendations/{id}", response_model=List[PostGet])
+def recommended_posts(id: int, db: Session = Depends(get_db)) -> List[PostGet]:
+    # Используем глобальные df1 и df2
+    top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
+    # Запрос в базу данных для получения деталей по этим ID
+    posts = db.query(Post).filter(Post.id.in_(top_5_posts_ids)).all()
 
-df1, df2 = load_features()
-model = load_models()
+    # Если количество полученных постов не равно 5, поднимаем ошибку. (Этот шаг опциональный, но может быть полезным на случай проблем.)
+    if len(posts) != 5:
+        raise HTTPException(404, "Some recommended posts not found")
 
-print(prediction_top_5_posts(df1, df2, 1800, model))
+    return posts
