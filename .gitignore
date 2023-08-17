@@ -2,3 +2,7 @@ catboost_model
 data
 test.py
 test_model.py
+app_csv.py
+nikita_efremov_post_features_df.csv
+nikita_efremov_user_features_df.csv
+post_text_df.csv

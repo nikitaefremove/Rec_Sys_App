@@ -40,46 +40,13 @@ model = load_models()
 
 ### Load features from database
 
-def batch_load_sql(query: str) -> pd.DataFrame:
-    CHUNKSIZE = 200000
-    engine = create_engine(
-        "postgresql://robot-startml-ro:pheiph0hahj1Vaif@"
-        "postgres.lab.karpov.courses:6432/startml"
-    )
-    conn = engine.connect().execution_options(stream_results=True)
-    chunks = []
-    for chunk_dataframe in pd.read_sql(query, conn, chunksize=CHUNKSIZE):
-        chunks.append(chunk_dataframe)
-    conn.close()
-    return pd.concat(chunks, ignore_index=True)
-
-
-def load_features():
-    query1 = 'SELECT * FROM nikita_efremov_user_features_df'
-    query2 = 'SELECT * FROM nikita_efremov_post_features_df'
-    return batch_load_sql(query1), batch_load_sql(query2)
-
-
-df1, df2 = load_features()
+df1 = pd.read_csv('nikita_efremov_user_features_df.csv')
+df2 = pd.read_csv('nikita_efremov_post_features_df.csv')
 
 
 ### Load post_text_df dataframe
 
-def load_post_text_df() -> pd.DataFrame:
-    query = 'SELECT * FROM public.post_text_df'
-    return batch_load_sql(query)
-
-
-def load_post_texts(post_ids: List[int]) -> List[dict]:
-    global post_texts_df
-    if post_texts_df is None:
-        raise ValueError("First call load_post_texts_df().")
-
-    records_df = post_texts_df[post_texts_df['post_id'].isin(post_ids)]
-    return records_df.to_dict("records")
-
-
-post_text_df = load_post_text_df()
+post_text_df = pd.read_csv('post_text_df.csv')
 
 
 ### Function for prediction
@@ -133,15 +100,14 @@ def get_post_id(id: int) -> PostGet:
 
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/{id}", response_model=List[PostGet])
-def recommended_posts(id: int, time: datetime, limit: int=5) -> List[PostGet]:
+def recommended_posts(id: int, limit: int=5) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
     # Filter top 5 posts from post_texts_df DataFrame
-    posts = post_texts_df[post_texts_df['post_id'].isin(top_5_posts_ids)]
+    posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
 
     if len(posts) != 5:
         raise HTTPException(404, "Some recommended posts not found")
 
     return posts.to_dict('records')
 
-print(get_post_id(3))
