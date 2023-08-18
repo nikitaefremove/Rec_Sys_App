@@ -101,8 +101,3 @@ def recommended_posts(id: int, limit: int=5) -> List[PostGet]:
         raise HTTPException(404, "Some recommended posts not found")
 
     return posts.to_dict('records')
-
-
-print(df1['user_id'])
-
-# print(recommended_posts(200))
