@@ -126,13 +126,10 @@ def get_post_id(id: int) -> PostGet:
 
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/{id}", response_model=List[PostGet])
-def recommended_posts(id: int, limit: int = 5) -> List[PostGet]:
+def recommended_posts(id: int, time: datetime = datetime.now(), limit: int = 10) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
     # Filter top 5 posts from post_texts_df DataFrame
     posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
-
-    if len(posts) != 5:
-        raise HTTPException(404, "Some recommended posts not found")
 
     return posts.to_dict('records')
