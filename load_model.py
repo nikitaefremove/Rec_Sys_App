@@ -9,7 +9,7 @@ def get_model_path(path: str) -> str:
     return MODEL_PATH
 
 def load_models():
-    model_path = get_model_path("/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/REC_SYS/catboost_model")
+    model_path = get_model_path("/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/catboost_model")
     model = CatBoostClassifier().load_model(model_path, format='cbm')
     return model
 
