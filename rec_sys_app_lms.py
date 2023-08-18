@@ -15,7 +15,7 @@ class PostGet(BaseModel):
     topic: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 app = FastAPI()

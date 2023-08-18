@@ -14,7 +14,7 @@ class PostGet(BaseModel):
     topic: str
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
 app = FastAPI()
@@ -103,6 +103,6 @@ def recommended_posts(id: int, limit: int=5) -> List[PostGet]:
     return posts.to_dict('records')
 
 
-# print(df1['user_id'])
+print(df1['user_id'])
 
-print(recommended_posts(200))
+# print(recommended_posts(200))
