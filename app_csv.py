@@ -6,16 +6,7 @@ import os
 from catboost import CatBoostClassifier
 from datetime import datetime
 from pydantic import BaseModel
-
-
-class PostGet(BaseModel):
-    post_id: int
-    text: str
-    topic: str
-
-    class Config:
-        orm_mode = True
-
+from schema import PostGet, Response
 
 app = FastAPI()
 
@@ -30,19 +21,18 @@ def get_model_path(path: str) -> str:
 
 
 def load_models():
-    model_path = get_model_path("/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/catboost_model")
+    model_path = get_model_path(
+        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/catboost_model")
     model = CatBoostClassifier().load_model(model_path, format='cbm')
     return model
 
 
 model = load_models()
 
-
 ### Load features from database
 
 df1 = pd.read_csv('nikita_efremov_user_features_df.csv')
 df2 = pd.read_csv('nikita_efremov_post_features_df.csv')
-
 
 ### Load post_text_df dataframe
 
@@ -90,8 +80,8 @@ def get_post_id(id: int) -> PostGet:
 
 
 ### Get 5 recommendation of post to user
-@app.get("/post/recommendations/{id}", response_model=List[PostGet])
-def recommended_posts(id: int, time: datetime = datetime.now(), limit: int=5) -> List[PostGet]:
+@app.get("/post/recommendations/{id}", response_model=Response)
+def recommended_posts(id: int, time: datetime = datetime.now(), limit: int = 5) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
     # Filter top 5 posts from post_texts_df DataFrame
