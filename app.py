@@ -7,15 +7,16 @@ from catboost import CatBoostClassifier
 import datetime as dt
 from datetime import datetime
 from pydantic import BaseModel
+from schema import PostGet
 
 
-class PostGet(BaseModel):
-    post_id: int
-    text: str
-    topic: str
-
-    class Config:
-        orm_mode = True
+# class PostGet(BaseModel):
+#     post_id: int
+#     text: str
+#     topic: str
+#
+#     class Config:
+#         orm_mode = True
 
 
 app = FastAPI()
