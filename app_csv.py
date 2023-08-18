@@ -1,12 +1,13 @@
 from typing import List
 from fastapi import FastAPI, HTTPException
 import pandas as pd
-from sqlalchemy import create_engine
+# from sqlalchemy import create_engine
 import os
 from catboost import CatBoostClassifier
 from datetime import datetime
-from pydantic import BaseModel
-from schema import PostGet, Response
+# from pydantic import BaseModel
+from schema import PostGet
+
 
 app = FastAPI()
 
@@ -80,7 +81,7 @@ def get_post_id(id: int) -> PostGet:
 
 
 ### Get 5 recommendation of post to user
-@app.get("/post/recommendations/{id}", response_model=Response)
+@app.get("/post/recommendations/{id}", response_model=List[PostGet])
 def recommended_posts(id: int, time: datetime = datetime.now(), limit: int = 5) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
@@ -92,7 +93,4 @@ def recommended_posts(id: int, time: datetime = datetime.now(), limit: int = 5) 
 
     return posts.to_dict('records')
 
-
-print(df1['user_id'])
-
-# print(recommended_posts(200))
+print(recommended_posts(444))
