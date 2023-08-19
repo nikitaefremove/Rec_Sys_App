@@ -5,7 +5,6 @@ from sqlalchemy import create_engine
 import os
 from catboost import CatBoostClassifier
 from datetime import datetime
-from pydantic import BaseModel
 from schema import PostGet
 
 app = FastAPI()
