@@ -4,18 +4,10 @@ import pandas as pd
 from sqlalchemy import create_engine
 import os
 from catboost import CatBoostClassifier
-import datetime
 from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel
-
-
-class PostGet(BaseModel):
-    id: int
-    text: str
-    topic: str
-
-    class Config:
-        orm_mode = True
+from schema import PostGet
 
 
 app = FastAPI()
@@ -79,11 +71,21 @@ def prediction_top_5_posts(user_features_df, post_features_df, user_id, model):
 @app.get("/post/recommendations/", response_model=List[PostGet])
 def recommended_posts(
         id: int,
-        time: datetime = datetime.now(),
+        time: datetime=datetime.now(),
         limit: int = 10) -> List[PostGet]:
     top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
 
     # Filter top 5 posts from post_texts_df DataFrame
     posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
 
-    return posts.to_dict('records')
+    # Convert posts to list of dictionaries and ensure they match PostGet model
+    posts_list = []
+    for _, row in posts.iterrows():
+        post_dict = row.to_dict()
+        post_dict["id"] = post_dict.pop("post_id")
+        if "Unnamed: 0" in post_dict:
+            del post_dict["Unnamed: 0"]
+        posts_list.append(PostGet(**post_dict))
+
+    return posts_list
+

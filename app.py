@@ -8,16 +8,6 @@ import datetime as dt
 from datetime import datetime
 from pydantic import BaseModel
 
-
-class PostGet(BaseModel):
-    post_id: int
-    text: str
-    topic: str
-
-    class Config:
-        orm_mode = True
-
-
 app = FastAPI()
 
 
@@ -122,4 +112,13 @@ def recommended_posts(
     # Filter top 5 posts from post_texts_df DataFrame
     posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
 
-    return posts.to_dict('records')
+    # Convert posts to list of dictionaries and ensure they match PostGet model
+    posts_list = []
+    for _, row in posts.iterrows():
+        post_dict = row.to_dict()
+        post_dict["id"] = post_dict.pop("post_id")
+        if "Unnamed: 0" in post_dict:
+            del post_dict["Unnamed: 0"]
+        posts_list.append(PostGet(**post_dict))
+
+    return posts_list
