@@ -1,12 +1,12 @@
 from typing import List
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 import pandas as pd
 from sqlalchemy import create_engine
 import os
 from catboost import CatBoostClassifier
-import datetime as dt
 from datetime import datetime
 from pydantic import BaseModel
+from schema import PostGet
 
 app = FastAPI()
 

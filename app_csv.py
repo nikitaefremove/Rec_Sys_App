@@ -88,4 +88,3 @@ def recommended_posts(
         posts_list.append(PostGet(**post_dict))
 
     return posts_list
-
