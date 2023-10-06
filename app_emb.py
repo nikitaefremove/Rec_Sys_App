@@ -47,7 +47,7 @@ def batch_load_sql(query: str) -> pd.DataFrame:
 
 def load_features():
     query1 = 'SELECT * FROM nikita_efremov_user_features_df'
-    query2 = 'SELECT * FROM nikita_efremov_post_features_df'
+    query2 = 'SELECT * FROM nikita_efremov_post_features_df_emb' # features with embeddings from Bert
     return batch_load_sql(query1), batch_load_sql(query2)
 
 
