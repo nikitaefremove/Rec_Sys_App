@@ -21,7 +21,7 @@ class PostGet(BaseModel):
     text : str
     topic : str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class FeedGet(BaseModel):
