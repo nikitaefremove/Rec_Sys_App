@@ -48,10 +48,11 @@ def batch_load_sql(query: str) -> pd.DataFrame:
 def load_features():
     query1 = 'SELECT * FROM nikita_efremov_user_features_df'
     query2 = 'SELECT * FROM nikita_efremov_post_features_df_emb'  # features with embeddings from Bert
-    return batch_load_sql(query1), batch_load_sql(query2)
+    query3 = 'SELECT * FROM nikita_efremov_post_features_df_emb'  # features with TFIDF
+    return batch_load_sql(query1), batch_load_sql(query2), batch_load_sql(query3)
 
 
-df1, df2 = load_features()
+df1, df2, df3 = load_features()
 
 
 ### Load post_text_df dataframe
@@ -97,7 +98,30 @@ def prediction_top_5_posts(user_features_df, post_features_df, user_id, model):
     return top_5_posts
 
 
-def recommended_posts(
+# Function for getting top recommended posts with TFIDF features (model_control)
+def recommended_posts_train(
+        id: int,
+        time: datetime = datetime.now(),
+        limit: int = 10) -> List[PostGet]:
+    top_5_posts_ids = prediction_top_5_posts(df1, df3, id, model)
+
+    # Filter top 5 posts from post_texts_df DataFrame
+    posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
+
+    # Convert posts to list of dictionaries and ensure they match PostGet model
+    posts_list = []
+    for _, row in posts.iterrows():
+        post_dict = row.to_dict()
+        post_dict["id"] = post_dict.pop("post_id")
+        if "Unnamed: 0" in post_dict:
+            del post_dict["Unnamed: 0"]
+        posts_list.append(PostGet(**post_dict))
+
+    return posts_list
+
+
+# Function for getting top recommended posts with Bert features (model_test)
+def recommended_posts_test(
         id: int,
         time: datetime = datetime.now(),
         limit: int = 10) -> List[PostGet]:
@@ -122,7 +146,8 @@ def recommended_posts(
 
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/", response_model=List[PostGet])
-def rec_post(id:int) -> List[PostGet]:
-    return recommended_posts(id)
+def rec_post(id: int) -> List[PostGet]:
+    return recommended_posts_train(id)
+
 
 print(rec_post(id=205))
