@@ -20,13 +20,16 @@ def get_model_path(path: str) -> str:
 
 
 def load_models():
-    model_path = get_model_path(
-        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/catboost_model")
-    model = CatBoostClassifier().load_model(model_path, format='cbm')
-    return model
+    model_control_path = get_model_path(
+        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/model_control")
+    model_test_path = get_model_path(
+        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/model_test")
+    model_control = CatBoostClassifier().load_model(model_control_path, format='cbm')
+    model_test = CatBoostClassifier().load_model(model_test_path, format='cbm')
+    return model_control, model_test
 
 
-model = load_models()
+model_control, model_test = load_models()
 
 
 ### Load features from database
@@ -103,7 +106,7 @@ def recommended_posts_train(
         id: int,
         time: datetime = datetime.now(),
         limit: int = 10) -> List[PostGet]:
-    top_5_posts_ids = prediction_top_5_posts(df1, df3, id, model)
+    top_5_posts_ids = prediction_top_5_posts(df1, df3, id, model_control)
 
     # Filter top 5 posts from post_texts_df DataFrame
     posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
@@ -125,7 +128,7 @@ def recommended_posts_test(
         id: int,
         time: datetime = datetime.now(),
         limit: int = 10) -> List[PostGet]:
-    top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model)
+    top_5_posts_ids = prediction_top_5_posts(df1, df2, id, model_test)
 
     # Filter top 5 posts from post_texts_df DataFrame
     posts = post_text_df[post_text_df['post_id'].isin(top_5_posts_ids)]
