@@ -12,9 +12,12 @@ app = FastAPI()
 
 
 # Load catboost_model
-def get_model_path(path: str) -> str:
+def get_model_path(path: str, type: str) -> str:
     if os.environ.get("IS_LMS") == "1":  # Checking localhost or LMS service
-        MODEL_PATH = '/workdir/user_input/model'
+        if type == 'control':
+            MODEL_PATH = '/workdir/user_input/model_control'
+        elif type == 'test':
+            MODEL_PATH = '/workdir/user_input/model_test'
     else:
         MODEL_PATH = path
     return MODEL_PATH
@@ -22,9 +25,11 @@ def get_model_path(path: str) -> str:
 
 def load_models():
     model_control_path = get_model_path(
-        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/model_control")
+        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/model_control",
+        'control')
     model_test_path = get_model_path(
-        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/model_test")
+        "/Users/nikitaefremov/Documents/DATA_SCIENCE/SML_ML/Rec_Sys_App/Rec_Sys_App/model_test",
+        'test')
     model_control = CatBoostClassifier().load_model(model_control_path, format='cbm')
     model_test = CatBoostClassifier().load_model(model_test_path, format='cbm')
     return model_control, model_test
