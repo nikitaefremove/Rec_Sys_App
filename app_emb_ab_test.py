@@ -6,6 +6,7 @@ import os
 from catboost import CatBoostClassifier
 from datetime import datetime
 from schema import PostGet
+import hashlib
 
 app = FastAPI()
 
@@ -51,7 +52,7 @@ def batch_load_sql(query: str) -> pd.DataFrame:
 def load_features():
     query1 = 'SELECT * FROM nikita_efremov_user_features_df'
     query2 = 'SELECT * FROM nikita_efremov_post_features_df_emb'  # features with embeddings from Bert
-    query3 = 'SELECT * FROM nikita_efremov_post_features_df_emb'  # features with TFIDF
+    query3 = 'SELECT * FROM nikita_efremov_post_features_df'  # features with TFIDF
     return batch_load_sql(query1), batch_load_sql(query2), batch_load_sql(query3)
 
 
@@ -145,12 +146,27 @@ def recommended_posts_test(
     return posts_list
 
 
+# Function which return group of user (control or test)
+def get_exp_group(user_id: int) -> str:
+    user_str = str(user_id)
+    value_str = user_str + 'my_salt'
+    value_num = int(hashlib.md5(value_str.encode()).hexdigest(), 16)
+    print(value_num)
+
+    if value_num / float(0xFFFFFFFF) < 0.5:
+        return 'control'
+    else:
+        return 'test'
+
+
 ### Endpoints
 
 ### Get 5 recommendation of post to user
 @app.get("/post/recommendations/", response_model=List[PostGet])
 def rec_post(id: int) -> List[PostGet]:
-    return recommended_posts_train(id)
-
-
-print(rec_post(id=205))
+    if get_exp_group(id) == 'control':
+        return recommended_posts_train(id)
+    elif get_exp_group(id) == 'test':
+        return recommended_posts_test(id)
+    else:
+        raise ValueError('Unknown group')
