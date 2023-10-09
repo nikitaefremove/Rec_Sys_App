@@ -1,12 +1,12 @@
-from typing import List
-from fastapi import FastAPI
-import pandas as pd
-from sqlalchemy import create_engine
 import os
-from catboost import CatBoostClassifier
-from datetime import datetime
-from schema import PostGet
 import hashlib
+from typing import List
+from datetime import datetime
+import pandas as pd
+from fastapi import FastAPI
+from schema import PostGet, Response
+from catboost import CatBoostClassifier
+from sqlalchemy import create_engine
 
 app = FastAPI()
 
@@ -33,7 +33,7 @@ def load_models():
 model_control, model_test = load_models()
 
 
-### Load features from database
+# Load features from database
 
 def batch_load_sql(query: str) -> pd.DataFrame:
     CHUNKSIZE = 200000
@@ -59,7 +59,7 @@ def load_features():
 df1, df2, df3 = load_features()
 
 
-### Load post_text_df dataframe
+# Load post_text_df dataframe
 
 def load_post_text_df() -> pd.DataFrame:
     query = 'SELECT * FROM public.post_text_df'
@@ -78,10 +78,10 @@ def load_post_texts(post_ids: List[int]) -> List[dict]:
 post_text_df = load_post_text_df()
 
 
-### Function for prediction
+# Function for prediction
 
 def prediction_top_5_posts(user_features_df, post_features_df, user_id, model):
-    ## Save the place for features is important for model
+    # Save the place for features is important for model
     places_for_features_columns = ['user_id', 'post_id', 'gender', 'age', 'country', 'city',
                                    'exp_group', 'os', 'source', 'count_actions', 'category_of_age',
                                    'cluster_feature', 'month', 'day', 'second', 'weekday', 'is_weekend',
@@ -147,9 +147,12 @@ def recommended_posts_test(
 
 
 # Function which return group of user (control or test)
+salt = 'my_secret_salt'
+
+
 def get_exp_group(user_id: int) -> str:
     user_str = str(user_id)
-    value_str = user_str + 'my_salt'
+    value_str = user_str + salt
     value_num = int(hashlib.md5(value_str.encode()).hexdigest(), 16)
     print(value_num)
 
@@ -159,14 +162,17 @@ def get_exp_group(user_id: int) -> str:
         return 'test'
 
 
-### Endpoints
+# Endpoints
 
-### Get 5 recommendation of post to user
-@app.get("/post/recommendations/", response_model=List[PostGet])
+# Get 5 recommendation of post to user
+@app.get("/post/recommendations/", response_model=Response)
 def rec_post(id: int) -> List[PostGet]:
-    if get_exp_group(id) == 'control':
-        return recommended_posts_train(id)
-    elif get_exp_group(id) == 'test':
-        return recommended_posts_test(id)
+    exp_group = get_exp_group(id)
+    if exp_group == 'control':
+        posts = recommended_posts_train(id)
+    elif exp_group == 'test':
+        posts = recommended_posts_test(id)
     else:
         raise ValueError('Unknown group')
+
+    return Response(exp_group=exp_group, recommendations=posts)
